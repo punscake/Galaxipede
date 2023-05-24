@@ -17,13 +17,13 @@ ABaseCharacter::ABaseCharacter()
 
 	HealthAttributeSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthAttributeSet"));
 	MovementAttributeSet = CreateDefaultSubobject<UMovementAttributeSet>(TEXT("MovementAttributeSet"));
+	LevelAttributeSet = CreateDefaultSubobject<ULevelAttributeSet>(TEXT("LevelAttributeSet"));
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ABaseCharacter::BindControls()
@@ -67,9 +67,8 @@ void ABaseCharacter::AddStartingGameplayAbilitiesAndEffects()
 
 			if (SpecHandle.IsValid())
 			{
-				FActiveGameplayEffectHandle ActiveGameplayEffectHandle =
-					AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(
-						*SpecHandle.Data.Get(), AbilitySystemComponent);
+				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(
+					*SpecHandle.Data.Get(), AbilitySystemComponent);
 			}
 		}
 

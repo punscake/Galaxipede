@@ -10,6 +10,7 @@
 #include "Core/Abilities/MyGameplayAbility.h"
 #include "Core/Abilities/HealthAttributeSet.h"
 #include "Core/Abilities/MovementAttributeSet.h"
+#include "Core/Abilities/LevelAttributeSet.h"
 #include "BaseCharacter.generated.h"
 
 UCLASS()
@@ -43,6 +44,9 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TObjectPtr<UMovementAttributeSet> MovementAttributeSet;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TObjectPtr<ULevelAttributeSet> LevelAttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayEffect>> StartingGameplayEffects;
