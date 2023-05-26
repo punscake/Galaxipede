@@ -11,6 +11,7 @@
 #include "Core/Abilities/HealthAttributeSet.h"
 #include "Core/Abilities/MovementAttributeSet.h"
 #include "Core/Abilities/LevelAttributeSet.h"
+#include "Core/Components/CustomCharacterMovementComponent.h"
 #include "BaseCharacter.generated.h"
 
 UCLASS()
@@ -20,7 +21,7 @@ class GALAXIPEDE_API ABaseCharacter : public ACharacter, public IAbilitySystemIn
 
 public:
 	// Sets default values for this character's properties
-	ABaseCharacter();
+	ABaseCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// Called when the game starts or when spawned
@@ -57,10 +58,16 @@ protected:
 	UPROPERTY()
 	uint8 bAbilitiesInitialized:1;
 
+	UCustomCharacterMovementComponent* CustomCharacterMovementComponent;
+
 public:	
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FORCEINLINE class UCustomCharacterMovementComponent* GetCustomCharacterMovementComponent() const;
+
+	virtual void PostInitializeComponents() override;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

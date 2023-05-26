@@ -44,15 +44,13 @@ void ULevelAttributeHelper::LevelChanged(const FOnAttributeChangeData& Data)
 			return;
 		}
 
-		if (dif > 0) {
+		if (dif >= 0) {
 			for (dif; dif > 0; dif--) {
 				LevelGameplayEffectHandle = ASC->ApplyGameplayEffectSpecToTarget(*LevelEffectSpecHandle.Data.Get(), ASC);
 			}
 		}
 		else if (LevelGameplayEffectHandle.IsValid()) {
-			for (dif; dif < 0; dif++) {
-				ASC->RemoveActiveGameplayEffect(LevelGameplayEffectHandle, 1);
-			}
+			ASC->RemoveActiveGameplayEffect(LevelGameplayEffectHandle, -dif);
 		}
 	}
 }

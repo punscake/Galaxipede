@@ -4,7 +4,8 @@
 #include "Actors/BaseCharacter.h"
 
 // Sets default values
-ABaseCharacter::ABaseCharacter()
+ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCustomCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -79,6 +80,18 @@ void ABaseCharacter::AddStartingGameplayAbilitiesAndEffects()
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+UCustomCharacterMovementComponent* ABaseCharacter::GetCustomCharacterMovementComponent() const
+{
+	return CustomCharacterMovementComponent;
+}
+
+void ABaseCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	CustomCharacterMovementComponent = Cast<UCustomCharacterMovementComponent>(Super::GetMovementComponent());
 }
 
 // Called every frame
