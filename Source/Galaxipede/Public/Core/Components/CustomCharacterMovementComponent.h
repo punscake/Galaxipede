@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
+#include "Core/Abilities/MovementAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomCharacterMovementComponent.generated.h"
 
@@ -44,7 +46,7 @@ public:
 
 	UCustomCharacterMovementComponent(const class FObjectInitializer& ObjectInitializer);
 
-	virtual bool HandlePendingLaunch() override;
+	//virtual bool HandlePendingLaunch() override;
 	virtual void UpdateFromCompressedFlags(uint8 Flags) override;
 	virtual class FNetworkPredictionData_Client* GetPredictionData_Client() const override;
 	void OnMovementUpdated(float DeltaTime, const FVector& OldLocation, const FVector& OldVelocity);
@@ -52,7 +54,7 @@ public:
 	//Set Max Fly Speed
 	uint8 bRequestMaxFlySpeedChange : 1;
 
-	UFUNCTION(Unreliable, Server, WithValidation)
+	UFUNCTION(Unreliable, Server)//, WithValidation)
 		void Server_SetMaxFlySpeed(const float NewMaxFlySpeed);
 
 	float CustomNewMaxFlySpeed;
@@ -60,4 +62,24 @@ public:
 	//Set Max Fly Speed (Called from the owning client)
 	UFUNCTION(BlueprintCallable, Category = "Max Fly Speed")
 		void SetMaxFlySpeed(float NewMaxFlySpeed);
+
+protected:
+
+	virtual void BeginPlay() override;
+
+	// Never call explicitly! Only to be bound to a delegate, assumes ASC is not nullptr!
+	virtual void SurgeMultiplierChanged(const FOnAttributeChangeData& Data);
+	
+	// Never call explicitly! Only to be bound to a delegate, assumes ASC is not nullptr!
+	virtual void MaxSpeedChanged(const FOnAttributeChangeData& Data);
+
+	UAbilitySystemComponent* ASC;
+
+	FGameplayAttribute SurgeSpeedMultiplierAttribute;
+
+	FGameplayAttribute MaxSpeedAttribute;
+
+	float CachedSurgeMultiplier;
+
+	float CachedMaxSpeed;
 };

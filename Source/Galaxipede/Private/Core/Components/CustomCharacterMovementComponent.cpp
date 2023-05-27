@@ -6,7 +6,38 @@
 
 UCustomCharacterMovementComponent::UCustomCharacterMovementComponent(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	CachedSurgeMultiplier = 0.f;
+}
 
+
+void UCustomCharacterMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Subscribes to movement attribute set's speed multiplier for more accurate validation
+	if (const IAbilitySystemInterface* OwnerWithAttributes = Cast<IAbilitySystemInterface>(GetOwner()))
+	{
+		ASC = OwnerWithAttributes->GetAbilitySystemComponent();
+
+		if (const UMovementAttributeSet* MovementAttributeSet = Cast<UMovementAttributeSet>(ASC->GetAttributeSet(UMovementAttributeSet::StaticClass())))
+		{
+			SurgeSpeedMultiplierAttribute = MovementAttributeSet->GetSurgeSpeedMultiAttribute();
+			ASC->GetGameplayAttributeValueChangeDelegate(SurgeSpeedMultiplierAttribute).AddUObject(this, &UCustomCharacterMovementComponent::SurgeMultiplierChanged);
+
+			MaxSpeedAttribute = MovementAttributeSet->GetMaxSpeedAttribute();
+			ASC->GetGameplayAttributeValueChangeDelegate(MaxSpeedAttribute).AddUObject(this, &UCustomCharacterMovementComponent::MaxSpeedChanged);
+		}
+	}
+}
+
+void UCustomCharacterMovementComponent::SurgeMultiplierChanged(const FOnAttributeChangeData& Data)
+{
+	CachedSurgeMultiplier = ASC->GetNumericAttribute(SurgeSpeedMultiplierAttribute);
+}
+
+void UCustomCharacterMovementComponent::MaxSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	CachedMaxSpeed = ASC->GetNumericAttribute(MaxSpeedAttribute);
 }
 
 void UCustomCharacterMovementComponent::OnMovementUpdated(float DeltaTime, const FVector& OldLocation, const FVector& OldVelocity)
@@ -21,13 +52,12 @@ void UCustomCharacterMovementComponent::OnMovementUpdated(float DeltaTime, const
 	//Set Max Walk Speed
 	if (bRequestMaxFlySpeedChange)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("%f"), CustomNewMaxFlySpeed));
 		bRequestMaxFlySpeedChange = false;
 		MaxFlySpeed = CustomNewMaxFlySpeed;
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("%f"), MaxFlySpeed));
 	}
 }
 
+/*
 bool UCustomCharacterMovementComponent::HandlePendingLaunch()
 {
 	if (!PendingLaunchVelocity.IsZero() && HasValidData())
@@ -42,7 +72,7 @@ bool UCustomCharacterMovementComponent::HandlePendingLaunch()
 
 	return false;
 }
-
+*/
 
 void UCustomCharacterMovementComponent::UpdateFromCompressedFlags(uint8 Flags)//Client only
 {
@@ -133,17 +163,30 @@ FSavedMovePtr UCustomCharacterMovementComponent::FNetworkPredictionData_Client_C
 
 
 //Set Max Walk Speed RPC to transfer the current Max Walk Speed from the Owning Client to the Server
+/* SKIP VALIDATION, AS MOVE SPEED LIMIT IS DYNAMIC AND THE CLIENT MAY NOT BE AWARE OF RECENT CHANGES
 bool UCustomCharacterMovementComponent::Server_SetMaxFlySpeed_Validate(const float NewMaxFlySpeed)
 {
-	if (NewMaxFlySpeed < 0.f || NewMaxFlySpeed > 2000.f)
-		return false;
+	return true;
+	float UpperFlySpeedLimit = 2000.f;
+	if (const IAbilitySystemInterface* OwnerWithAttributes = Cast<IAbilitySystemInterface>(GetOwner()))
+	{
+		if (const ULevelAttributeSet * AS = Cast<ULevelAttributeSet>(OwnerWithAttributes->GetAbilitySystemComponent()->GetAttributeSet(ULevelAttributeSet::StaticClass())))
+		{
+			UpperFlySpeedLimit = OwnerWithAttributes->GetAbilitySystemComponent()->GetNumericAttribute(AS->GetLevelAttribute());
+		}
+
+	}
+	if (NewMaxFlySpeed < 0.f || NewMaxFlySpeed > 2000.f) {
+		return false;}
 	else
 		return true;
 }
+*/
 
+// Instead clamp speed on server and notify client
 void UCustomCharacterMovementComponent::Server_SetMaxFlySpeed_Implementation(const float NewMaxFlySpeed)
 {
-	CustomNewMaxFlySpeed = NewMaxFlySpeed;
+	CustomNewMaxFlySpeed = FMath::Clamp(NewMaxFlySpeed, 0.f, CachedMaxSpeed * CachedSurgeMultiplier);
 }
 
 void UCustomCharacterMovementComponent::SetMaxFlySpeed(float NewMaxFlySpeed)

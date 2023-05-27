@@ -20,9 +20,9 @@ class GALAXIPEDE_API UMovementAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "Speed", ReplicatedUsing = OnRep_Speed)
-	FGameplayAttributeData Speed;
-	ATTRIBUTE_ACCESSORS(UMovementAttributeSet, Speed)
+	UPROPERTY(BlueprintReadOnly, Category = "MaxSpeed", ReplicatedUsing = OnRep_MaxSpeed)
+	FGameplayAttributeData MaxSpeed;
+	ATTRIBUTE_ACCESSORS(UMovementAttributeSet, MaxSpeed)
 		
 	UPROPERTY(BlueprintReadOnly, Category = "SurgeSpeedMulti", ReplicatedUsing = OnRep_SurgeSpeedMulti)
 	FGameplayAttributeData SurgeSpeedMulti;
@@ -41,7 +41,7 @@ public:
 	ATTRIBUTE_ACCESSORS(UMovementAttributeSet, PercentMaxSurgeRecovery)
 
 	UFUNCTION()
-	virtual void OnRep_Speed(const FGameplayAttributeData& OldSpeed);
+	virtual void OnRep_MaxSpeed(const FGameplayAttributeData& OldMaxSpeed);
 
 	UFUNCTION()
 	virtual void OnRep_SurgeSpeedMulti(const FGameplayAttributeData& OldSurgeSpeedMulti);

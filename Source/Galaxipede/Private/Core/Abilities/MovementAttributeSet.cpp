@@ -4,9 +4,9 @@
 #include "Core/Abilities/MovementAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 
-void UMovementAttributeSet::OnRep_Speed(const FGameplayAttributeData& OldSpeed)
+void UMovementAttributeSet::OnRep_MaxSpeed(const FGameplayAttributeData& OldMaxSpeed)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UMovementAttributeSet, Speed, OldSpeed);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UMovementAttributeSet, MaxSpeed, OldMaxSpeed);
 }
 
 void UMovementAttributeSet::OnRep_SurgeSpeedMulti(const FGameplayAttributeData& OldSurgeSpeedMulti)
@@ -33,7 +33,7 @@ void UMovementAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION_NOTIFY(UMovementAttributeSet, Speed, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UMovementAttributeSet, MaxSpeed, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMovementAttributeSet, SurgeSpeedMulti, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMovementAttributeSet, SurgeTime, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMovementAttributeSet, MaxSurgeTime, COND_None, REPNOTIFY_Always);

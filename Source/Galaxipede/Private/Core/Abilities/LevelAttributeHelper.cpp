@@ -23,13 +23,13 @@ void ULevelAttributeHelper::BeginPlay()
 	{
 		ASC = OwnerWithAttributes->GetAbilitySystemComponent();
 
-		if (const ULevelAttributeSet* AS = Cast<ULevelAttributeSet>(ASC->GetAttributeSet(ULevelAttributeSet::StaticClass())))
+		if (const ULevelAttributeSet* LevelAttributeSet = Cast<ULevelAttributeSet>(ASC->GetAttributeSet(ULevelAttributeSet::StaticClass())))
 		{
 			FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 			EffectContext.AddSourceObject(this);
 			LevelEffectSpecHandle = ASC->MakeOutgoingSpec(LevelUpStackingEffect, 1, EffectContext);
 
-			ASC->GetGameplayAttributeValueChangeDelegate(AS->GetLevelAttribute()).AddUObject(this, &ULevelAttributeHelper::LevelChanged);
+			ASC->GetGameplayAttributeValueChangeDelegate(LevelAttributeSet->GetLevelAttribute()).AddUObject(this, &ULevelAttributeHelper::LevelChanged);
 		}
 	}
 }
