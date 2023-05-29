@@ -34,7 +34,9 @@ protected:
 	// Override for custom ability binds
 	virtual void BindControls();
 
-	virtual void AddStartingGameplayAbilitiesAndEffects();
+	virtual void AddStartingGameplayAbilities();
+
+	virtual void AddStartingGameplayEffects();
 
 	// Abilities
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
@@ -52,7 +54,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayEffect>> StartingGameplayEffects;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<UMyGameplayAbility>> StartingGameplayAbilities;
 
 	UPROPERTY()

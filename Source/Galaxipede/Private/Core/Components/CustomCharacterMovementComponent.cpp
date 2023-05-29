@@ -183,7 +183,7 @@ bool UCustomCharacterMovementComponent::Server_SetMaxFlySpeed_Validate(const flo
 }
 */
 
-// Instead clamp speed on server and notify client
+// Instead clamp speed on server
 void UCustomCharacterMovementComponent::Server_SetMaxFlySpeed_Implementation(const float NewMaxFlySpeed)
 {
 	CustomNewMaxFlySpeed = FMath::Clamp(NewMaxFlySpeed, 0.f, CachedMaxSpeed * CachedSurgeMultiplier);

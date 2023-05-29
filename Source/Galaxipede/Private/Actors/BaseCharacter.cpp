@@ -25,6 +25,9 @@ ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer)
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	AddStartingGameplayEffects();
 }
 
 void ABaseCharacter::BindControls()
@@ -45,7 +48,7 @@ void ABaseCharacter::BindControls()
 	}
 }
 
-void ABaseCharacter::AddStartingGameplayAbilitiesAndEffects()
+void ABaseCharacter::AddStartingGameplayAbilities()
 {
 	if (!bAbilitiesInitialized && AbilitySystemComponent && HasAuthority())
 	{
@@ -58,7 +61,14 @@ void ABaseCharacter::AddStartingGameplayAbilitiesAndEffects()
 				this
 			));
 		}
+		bAbilitiesInitialized = true;
+	}
+}
 
+void ABaseCharacter::AddStartingGameplayEffects()
+{
+	if (AbilitySystemComponent && HasAuthority())
+	{
 		for (TSubclassOf<UGameplayEffect>& StartingEffect : StartingGameplayEffects)
 		{
 			FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
@@ -72,8 +82,6 @@ void ABaseCharacter::AddStartingGameplayAbilitiesAndEffects()
 					*SpecHandle.Data.Get(), AbilitySystemComponent);
 			}
 		}
-
-		bAbilitiesInitialized = true;
 	}
 }
 
@@ -116,8 +124,7 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 	//Initialize GAS on server
 	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		AddStartingGameplayAbilitiesAndEffects();
+		AddStartingGameplayAbilities();
 	}
 }
 
