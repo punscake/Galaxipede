@@ -29,7 +29,7 @@ protected:
 	// Never call explicitly! Only to be bound to a delegate, assumes ASC is not nullptr!
 	virtual void LevelChanged(const FOnAttributeChangeData& Data);
 
-	UAbilitySystemComponent* ASC;
+	TObjectPtr<UAbilitySystemComponent> ASC;
 
 	FGameplayEffectSpecHandle LevelEffectSpecHandle;
 

@@ -62,6 +62,13 @@ protected:
 
 	UCustomCharacterMovementComponent* CustomCharacterMovementComponent;
 
+	// Segments
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Pede Segments")
+	ABaseCharacter* NextSegment;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Pede Segments")
+	ABaseCharacter* PreviousSegment;
+
 public:	
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -76,4 +83,17 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// If set to true will combine with other segments on collision
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pede Segments")
+	bool bCanBeAddedAsSegment;
+
+	UFUNCTION(BlueprintCallable, Category = "Pede Segments")
+	ABaseCharacter* GetNextSegment();
+	
+	UFUNCTION(BlueprintCallable, Category = "Pede Segments")
+	ABaseCharacter* GetPreviousSegment();
+
+	UFUNCTION(BlueprintCallable, Category = "Pede Segments")
+	ABaseCharacter* GetHeadSegment();
 };

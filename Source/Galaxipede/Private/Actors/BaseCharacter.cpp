@@ -117,6 +117,28 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	BindControls();
 }
 
+ABaseCharacter* ABaseCharacter::GetNextSegment()
+{
+	return NextSegment;
+}
+
+ABaseCharacter* ABaseCharacter::GetPreviousSegment()
+{
+	return PreviousSegment;
+}
+
+ABaseCharacter* ABaseCharacter::GetHeadSegment()
+{
+	ABaseCharacter* Segment = NextSegment;
+	ABaseCharacter* Head = this;
+	while (Segment)
+	{
+		Head = Segment;
+		Segment = Segment->GetNextSegment();
+	}
+	return Head;
+}
+
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);

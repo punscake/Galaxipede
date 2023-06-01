@@ -8,9 +8,27 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomCharacterMovementComponent.generated.h"
 
-/**
- * 
- */
+
+USTRUCT(BlueprintType)
+struct FTrail
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Trail Data")
+    FVector Location;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Trail Data")
+    FRotator Rotation;
+
+	// Specifies if travelling to this point should be instant (no distance requirement)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Trail Data")
+    bool bTeleportLogic;
+
+	FTrail() {}
+
+	FTrail(FVector loc, FRotator rot, bool bUseTeleportLogic = false) : Location(loc), Rotation(rot), bTeleportLogic(bUseTeleportLogic){}
+};
+
 UCLASS()
 class GALAXIPEDE_API UCustomCharacterMovementComponent : public UCharacterMovementComponent
 {
@@ -54,8 +72,16 @@ public:
 	//Set Max Fly Speed
 	uint8 bRequestMaxFlySpeedChange : 1;
 
+	// Should be set to true on all Segment character types
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Trail Data")
+	bool bRunTrailLogic;
+
+	// Made up of points (defined by location and rotation), each point specifies if trave should be instant or not (bTeleportLogic)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Trail Data")
+	TArray<FTrail> Trail;
+
 	UFUNCTION(Unreliable, Server)//, WithValidation)
-		void Server_SetMaxFlySpeed(const float NewMaxFlySpeed);
+	void Server_SetMaxFlySpeed(const float NewMaxFlySpeed);
 
 	float CustomNewMaxFlySpeed;
 
@@ -73,7 +99,7 @@ protected:
 	// Never call explicitly! Only to be bound to a delegate, assumes ASC is not nullptr!
 	virtual void MaxSpeedChanged(const FOnAttributeChangeData& Data);
 
-	UAbilitySystemComponent* ASC;
+	TObjectPtr<UAbilitySystemComponent> ASC;
 
 	FGameplayAttribute SurgeSpeedMultiplierAttribute;
 
