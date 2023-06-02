@@ -39,16 +39,16 @@ protected:
 	virtual void AddStartingGameplayEffects();
 
 	// Abilities
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(BlueprintReadOnly, Category = "Abilities")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
 	TObjectPtr<UHealthAttributeSet> HealthAttributeSet;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
 	TObjectPtr<UMovementAttributeSet> MovementAttributeSet;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
 	TObjectPtr<ULevelAttributeSet> LevelAttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
@@ -63,11 +63,14 @@ protected:
 	UCustomCharacterMovementComponent* CustomCharacterMovementComponent;
 
 	// Segments
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Pede Segments")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pede Segments")
 	ABaseCharacter* NextSegment;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Pede Segments")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pede Segments")
 	ABaseCharacter* PreviousSegment;
+
+	UFUNCTION(BlueprintCallable, Category = "Pede Segments")
+	bool AttemptAttachSegments(ABaseCharacter* Segment);
 
 public:	
 
@@ -85,12 +88,14 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// If set to true will combine with other segments on collision
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pede Segments")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pede Segments")
 	bool bCanBeAddedAsSegment;
 
+	// Moving closer to the head
 	UFUNCTION(BlueprintCallable, Category = "Pede Segments")
 	ABaseCharacter* GetNextSegment();
 	
+	// Moving closer to the tail
 	UFUNCTION(BlueprintCallable, Category = "Pede Segments")
 	ABaseCharacter* GetPreviousSegment();
 

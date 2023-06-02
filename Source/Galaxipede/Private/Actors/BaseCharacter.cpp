@@ -85,6 +85,23 @@ void ABaseCharacter::AddStartingGameplayEffects()
 	}
 }
 
+bool ABaseCharacter::AttemptAttachSegments(ABaseCharacter* Segment)
+{
+	if (!bCanBeAddedAsSegment || !Segment->bCanBeAddedAsSegment || !Controller)
+		return false;
+	ABaseCharacter* Head = Segment->GetHeadSegment();
+	if (Head->Controller)
+		return false;
+	Segment->PreviousSegment = this;
+	NextSegment = Segment;
+	AbilitySystemComponent->CancelAllAbilities();
+	AbilitySystemComponent->ClearAllAbilities(); //TODO replace with tag
+	AController* C = Controller;
+	C->UnPossess();
+	C->Possess(Head);
+	return true;
+}
+
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;

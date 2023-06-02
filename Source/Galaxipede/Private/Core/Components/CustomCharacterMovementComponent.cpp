@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Core/Components/CustomCharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Actors/BaseCharacter.h"
 
 UCustomCharacterMovementComponent::UCustomCharacterMovementComponent(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	CachedSurgeMultiplier = 0.f;
+	BaseCharacterOwner = Cast<ABaseCharacter>(GetOwner());
 }
 
 
@@ -35,6 +36,44 @@ void UCustomCharacterMovementComponent::SurgeMultiplierChanged(const FOnAttribut
 	CachedSurgeMultiplier = ASC->GetNumericAttribute(SurgeSpeedMultiplierAttribute);
 }
 
+void UCustomCharacterMovementComponent::TravelAlongTrail(float Distance)
+{
+	if (!bRunTrailLogic || !PawnOwner->HasAuthority())
+		return;
+	ABaseCharacter* PrevSegment = BaseCharacterOwner->GetPreviousSegment();
+	if (!PrevSegment)
+		return;
+	UCustomCharacterMovementComponent* PrevSegmentCMC = PrevSegment->GetCustomCharacterMovementComponent();
+	if (!PrevSegmentCMC)
+		return;
+
+	FVector CurrentLocation = GetOwner()->GetActorLocation();
+	FTrail NextPoint = FTrail();
+	float DistanceToNextPoint = 0.f;
+	float DistanceToTravel = Distance;
+	while (!TrailQueue.IsEmpty() && TrailQueue.Dequeue(NextPoint))
+	{
+		DistanceToNextPoint = FVector::Dist(CurrentLocation, NextPoint.Location);
+		if (NextPoint.bTeleportLogic)
+		{
+			PrevSegmentCMC->TrailQueue.Enqueue(NextPoint);
+		}
+		else if (DistanceToTravel > DistanceToNextPoint)
+		{
+			PrevSegmentCMC->TrailQueue.Enqueue(NextPoint);
+			DistanceToTravel -= DistanceToNextPoint;
+		}
+		else
+		{
+			NextPoint.Location = UKismetMathLibrary::VLerp(CurrentLocation, NextPoint.Location, DistanceToTravel / DistanceToNextPoint);
+			break;
+		}
+	}
+	GetOwner()->TeleportTo(NextPoint.Location, NextPoint.Rotation);
+	PrevSegmentCMC->TrailQueue.Enqueue(NextPoint);
+	PrevSegmentCMC->TravelAlongTrail(Distance);
+}
+
 void UCustomCharacterMovementComponent::MaxSpeedChanged(const FOnAttributeChangeData& Data)
 {
 	CachedMaxSpeed = ASC->GetNumericAttribute(MaxSpeedAttribute);
@@ -43,6 +82,16 @@ void UCustomCharacterMovementComponent::MaxSpeedChanged(const FOnAttributeChange
 void UCustomCharacterMovementComponent::OnMovementUpdated(float DeltaTime, const FVector& OldLocation, const FVector& OldVelocity)
 {
 	Super::OnMovementUpdated(DeltaTime, OldLocation, OldVelocity);
+
+	if (bRunTrailLogic && PawnOwner->HasAuthority())
+	{
+		if (ABaseCharacter* PrevSegment = BaseCharacterOwner->GetPreviousSegment())
+		{
+			FTrail Point = FTrail(BaseCharacterOwner->GetActorLocation(), BaseCharacterOwner->GetActorRotation(), false);
+			PrevSegment->GetCustomCharacterMovementComponent()->TrailQueue.Enqueue(Point);
+			PrevSegment->GetCustomCharacterMovementComponent()->TravelAlongTrail(FVector::Dist(OldLocation, BaseCharacterOwner->GetActorLocation()));
+		}
+	}
 
 	if (!CharacterOwner)
 	{
@@ -56,23 +105,6 @@ void UCustomCharacterMovementComponent::OnMovementUpdated(float DeltaTime, const
 		MaxFlySpeed = CustomNewMaxFlySpeed;
 	}
 }
-
-/*
-bool UCustomCharacterMovementComponent::HandlePendingLaunch()
-{
-	if (!PendingLaunchVelocity.IsZero() && HasValidData())
-	{
-		Velocity = PendingLaunchVelocity;
-		//Remmed out so our dodge move won't play the falling animation.
-		//SetMovementMode(MOVE_Falling);
-		PendingLaunchVelocity = FVector::ZeroVector;
-		bForceNextFloorCheck = true;
-		return true;
-	}
-
-	return false;
-}
-*/
 
 void UCustomCharacterMovementComponent::UpdateFromCompressedFlags(uint8 Flags)//Client only
 {

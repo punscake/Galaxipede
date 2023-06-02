@@ -6,6 +6,7 @@
 #include "AbilitySystemInterface.h"
 #include "Core/Abilities/MovementAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Containers/Queue.h"
 #include "CustomCharacterMovementComponent.generated.h"
 
 
@@ -77,8 +78,10 @@ public:
 	bool bRunTrailLogic;
 
 	// Made up of points (defined by location and rotation), each point specifies if trave should be instant or not (bTeleportLogic)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Trail Data")
-	TArray<FTrail> Trail;
+	TQueue<FTrail, EQueueMode::Spsc> TrailQueue;
+
+	UFUNCTION()
+	void TravelAlongTrail(float Distance);
 
 	UFUNCTION(Unreliable, Server)//, WithValidation)
 	void Server_SetMaxFlySpeed(const float NewMaxFlySpeed);
@@ -100,6 +103,9 @@ protected:
 	virtual void MaxSpeedChanged(const FOnAttributeChangeData& Data);
 
 	TObjectPtr<UAbilitySystemComponent> ASC;
+
+	UPROPERTY()
+	class ABaseCharacter* BaseCharacterOwner;
 
 	FGameplayAttribute SurgeSpeedMultiplierAttribute;
 
