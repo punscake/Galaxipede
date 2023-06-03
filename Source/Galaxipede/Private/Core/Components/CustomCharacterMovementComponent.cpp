@@ -3,17 +3,19 @@
 #include "Core/Components/CustomCharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Actors/BaseCharacter.h"
-
+#include "DrawDebugHelpers.h"
 UCustomCharacterMovementComponent::UCustomCharacterMovementComponent(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	CachedSurgeMultiplier = 0.f;
-	BaseCharacterOwner = Cast<ABaseCharacter>(GetOwner());
 }
 
 
 void UCustomCharacterMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	BaseCharacterOwner = Cast<ABaseCharacter>(GetOwner());
+	LastTrailPoint = GetActorLocation();
 
 	// Subscribes to movement attribute set's speed multiplier for more accurate validation
 	if (const IAbilitySystemInterface* OwnerWithAttributes = Cast<IAbilitySystemInterface>(GetOwner()))
@@ -38,40 +40,49 @@ void UCustomCharacterMovementComponent::SurgeMultiplierChanged(const FOnAttribut
 
 void UCustomCharacterMovementComponent::TravelAlongTrail(float Distance)
 {
-	if (!bRunTrailLogic || !PawnOwner->HasAuthority())
+	if (!bRunTrailLogic || !PawnOwner->HasAuthority() || TrailQueue.IsEmpty())
 		return;
 	ABaseCharacter* PrevSegment = BaseCharacterOwner->GetPreviousSegment();
-	if (!PrevSegment)
-		return;
-	UCustomCharacterMovementComponent* PrevSegmentCMC = PrevSegment->GetCustomCharacterMovementComponent();
-	if (!PrevSegmentCMC)
-		return;
-
-	FVector CurrentLocation = GetOwner()->GetActorLocation();
+	UCustomCharacterMovementComponent* PrevSegmentCMC = nullptr;
+	if (PrevSegment)
+		PrevSegmentCMC = PrevSegment->GetCustomCharacterMovementComponent();
+	
+	FTrail CurrentPoint = FTrail(GetOwner()->GetActorLocation(), GetOwner()->GetActorRotation(), true);
 	FTrail NextPoint = FTrail();
-	float DistanceToNextPoint = 0.f;
+	TrailQueue.Dequeue(NextPoint);
+	float DistanceToNextPoint;
 	float DistanceToTravel = Distance;
-	while (!TrailQueue.IsEmpty() && TrailQueue.Dequeue(NextPoint))
+	do
 	{
-		DistanceToNextPoint = FVector::Dist(CurrentLocation, NextPoint.Location);
+		DistanceToNextPoint = FVector::Dist(CurrentPoint.Location, NextPoint.Location);
 		if (NextPoint.bTeleportLogic)
 		{
-			PrevSegmentCMC->TrailQueue.Enqueue(NextPoint);
+			PrevSegmentCMC ? PrevSegmentCMC->TrailQueue.Enqueue(NextPoint) : false;
+			CurrentPoint = NextPoint;
+			TrailQueue.Pop();
 		}
 		else if (DistanceToTravel > DistanceToNextPoint)
 		{
-			PrevSegmentCMC->TrailQueue.Enqueue(NextPoint);
+			PrevSegmentCMC ? PrevSegmentCMC->TrailQueue.Enqueue(NextPoint) : false;
 			DistanceToTravel -= DistanceToNextPoint;
+			CurrentPoint = NextPoint;
+			TrailQueue.Pop();
 		}
 		else
 		{
-			NextPoint.Location = UKismetMathLibrary::VLerp(CurrentLocation, NextPoint.Location, DistanceToTravel / DistanceToNextPoint);
+			CurrentPoint.Location = UKismetMathLibrary::VLerp(CurrentPoint.Location, NextPoint.Location, DistanceToTravel / DistanceToNextPoint);
+			CurrentPoint.bTeleportLogic = false;
 			break;
 		}
 	}
-	GetOwner()->TeleportTo(NextPoint.Location, NextPoint.Rotation);
-	PrevSegmentCMC->TrailQueue.Enqueue(NextPoint);
-	PrevSegmentCMC->TravelAlongTrail(Distance);
+	while (TrailQueue.Peek(NextPoint));
+
+	GetOwner()->TeleportTo(CurrentPoint.Location, CurrentPoint.Rotation);
+
+	if (PrevSegmentCMC) {
+		PrevSegmentCMC->TrailQueue.Enqueue(CurrentPoint);
+		PrevSegmentCMC->TravelAlongTrail(Distance);
+	}
 }
 
 void UCustomCharacterMovementComponent::MaxSpeedChanged(const FOnAttributeChangeData& Data)
@@ -83,13 +94,24 @@ void UCustomCharacterMovementComponent::OnMovementUpdated(float DeltaTime, const
 {
 	Super::OnMovementUpdated(DeltaTime, OldLocation, OldVelocity);
 
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, AActor::GetDebugName(BaseCharacterOwner->GetPreviousSegment()));
+
 	if (bRunTrailLogic && PawnOwner->HasAuthority())
 	{
 		if (ABaseCharacter* PrevSegment = BaseCharacterOwner->GetPreviousSegment())
 		{
-			FTrail Point = FTrail(BaseCharacterOwner->GetActorLocation(), BaseCharacterOwner->GetActorRotation(), false);
-			PrevSegment->GetCustomCharacterMovementComponent()->TrailQueue.Enqueue(Point);
-			PrevSegment->GetCustomCharacterMovementComponent()->TravelAlongTrail(FVector::Dist(OldLocation, BaseCharacterOwner->GetActorLocation()));
+			float DistanceMoved = FVector::Dist(LastTrailPoint, BaseCharacterOwner->GetActorLocation());
+			if (DistanceMoved > DistanceThreshold)
+			{
+				LastTrailPoint = BaseCharacterOwner->GetActorLocation();
+				FTrail Point = FTrail(LastTrailPoint, BaseCharacterOwner->GetActorRotation(), false);
+				PrevSegment->GetCustomCharacterMovementComponent()->TrailQueue.Enqueue(Point);
+				PrevSegment->GetCustomCharacterMovementComponent()->TravelAlongTrail(DistanceMoved);
+			}
+		}
+		else
+		{
+			LastTrailPoint = BaseCharacterOwner->GetActorLocation();
 		}
 	}
 

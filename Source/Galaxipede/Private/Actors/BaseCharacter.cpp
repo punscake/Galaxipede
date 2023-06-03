@@ -96,9 +96,7 @@ bool ABaseCharacter::AttemptAttachSegments(ABaseCharacter* Segment)
 	NextSegment = Segment;
 	AbilitySystemComponent->CancelAllAbilities();
 	AbilitySystemComponent->ClearAllAbilities(); //TODO replace with tag
-	AController* C = Controller;
-	C->UnPossess();
-	C->Possess(Head);
+	Controller->Possess(Head);
 	return true;
 }
 

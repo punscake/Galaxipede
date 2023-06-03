@@ -104,6 +104,11 @@ protected:
 
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FVector LastTrailPoint;
+
+	const float DistanceThreshold = 5.f;
+
 	UPROPERTY()
 	class ABaseCharacter* BaseCharacterOwner;
 
