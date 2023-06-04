@@ -23,11 +23,11 @@ struct FTrail
 
 	// Specifies if travelling to this point should be instant (no distance requirement)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Trail Data")
-    bool bTeleportLogic;
+    float Distance;
 
 	FTrail() {}
 
-	FTrail(FVector loc, FRotator rot, bool bUseTeleportLogic = false) : Location(loc), Rotation(rot), bTeleportLogic(bUseTeleportLogic){}
+	FTrail(FVector loc, FRotator rot, float Dist) : Location(loc), Rotation(rot), Distance(Dist){}
 };
 
 UCLASS()
@@ -77,12 +77,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Trail Data")
 	bool bRunTrailLogic;
 
-	// Made up of points (defined by location and rotation), each point specifies if trave should be instant or not (bTeleportLogic)
-	TQueue<FTrail, EQueueMode::Spsc> TrailQueue;
-
-	UFUNCTION()
-	void TravelAlongTrail(float Distance);
-
 	UFUNCTION(Unreliable, Server)//, WithValidation)
 	void Server_SetMaxFlySpeed(const float NewMaxFlySpeed);
 
@@ -104,10 +98,27 @@ protected:
 
 	TObjectPtr<UAbilitySystemComponent> ASC;
 
+	//Start Trail logic
+	TQueue<FTrail, EQueueMode::Mpsc> Trail;
+
+	//  Most recently created trail point
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FVector LastTrailPoint;
 
+	//  Distance to travel before creating a new trail point
 	const float DistanceThreshold = 5.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float DistanceAccumulated;
+
+	//  How far down the trail should next segment be positioned
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DistanceBetweenSegments;
+
+	//  Whether the newly created trail point should have distance set to 0.f
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite)
+	bool bTeleportMovement;
+	//End Trail logic
 
 	UPROPERTY()
 	class ABaseCharacter* BaseCharacterOwner;
